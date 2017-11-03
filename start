@@ -1,10 +1,10 @@
 #!/bin/bash
-if [ ! -f /usr/local/unrealircd/conf/unrealircd.conf ]; then
-        cp -Rpv /unrealircd_defaultconf/* /usr/local/unrealircd/conf/
-	cp -Rpv /unrealircd_defaultconf/examples/example.conf /usr/local/unrealircd/conf/unrealircd.conf
+if [ ! -f ${UNREAL_HOME}/unrealircd/conf/unrealircd.conf ]; then
+        cp -Rpv /unrealircd_defaultconf/* ${UNREAL_HOME}/unrealircd/conf/
+#	cp -Rpv /unrealircd_defaultconf/examples/example.conf ${UNREAL_HOME}/unrealircd/conf/unrealircd.conf
 fi
 
-cd /usr/local/unrealircd/conf/ssl/
+cd ${UNREAL_HOME}/unrealircd/conf/ssl/
 
 if [ ! -f server.cert.pem ]; then
   openssl req -new -out server.req.pem -keyout server.key.pem -nodes -config openssl.cnf -batch
@@ -13,8 +13,23 @@ if [ ! -f server.cert.pem ]; then
   chmod o-rwx server.req.pem server.key.pem server.cert.pem 
   chmod g-rwx server.req.pem server.key.pem server.cert.pem
 fi
+if [ ! -f ${UNREAL_HOME}/unrealircd/conf/unrealircd.conf ]; then
+ echo ""
+ echo "******************************************************"
+ echo "You NEED to copy conf/example.conf to conf/unrealircd.conf and adjust it to your needs to run unrealircd!"
+ echo "be sure you mapped a volume in here e.g.:"
+ echo " mkdir -p /mnt/docker/unrealircd/"
+ echo " chown 1000:1000 /mnt/docker/unrealircd/"
+ echo " docker run --rm -v /mnt/docker/unrealircd:/usr/local/unrealircd/conf -p 6667:6667 metabool/unrealircd4"
+ echo " copy & edit /mnt/docker/unrealircd/examples/example.conf to /mnt/docker/unrealircd/unrealircd.conf"
+ echo " docker run -d --rm -v /mnt/docker/unrealircd:/usr/local/unrealircd/conf -p 6667:6667 metabool/unrealircd4"
+ echo ""
+ echo "******************************************************"
 
-/usr/local/unrealircd/bin/unrealircd -F -f /usr/local/unrealircd/conf/unrealircd.conf
+ exit 0
+fi
+
+${UNREAL_HOME}/unrealircd/bin/unrealircd -F -f ${UNREAL_HOME}/unrealircd/conf/unrealircd.conf
 PID=$!
 trap "kill -SIGTERM $PID" SIGINT SIGTERM 
 wait
