@@ -52,6 +52,7 @@ RUN mkdir -p /unrealircd_defaultconf && \
     chown -R ${UNREAL_USER}:${UNREAL_USER} /usr/local/unrealircd/ && \
     chown -R ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf 
 
+RUN ls -lha /usr/local/unrealircd/conf/
 USER ${UNREAL_USER}
 
 ADD openssl.cnf /usr/local/unrealircd/conf/ssl/openssl.cnf
