@@ -41,6 +41,7 @@ RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/01buildconfig && 
     make && \
     make install && \
     apt-get -y remove build-essential && \
+    apt-get autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/src/* /etc/unrealircd/unrealircd.conf
 
@@ -55,8 +56,9 @@ USER ${UNREAL_USER}
 
 ADD openssl.cnf /usr/local/unrealircd/conf/ssl/openssl.cnf
 ADD start /start
-RUN ls -lha /
-RUN cp -Rv /usr/local/unrealircd/conf/* /unrealircd_defaultconf/
+RUN ls -lha /usr/local/
+RUN ls -lha /usr/local/unrealircd/
+RUN cp -Rpv /usr/local/unrealircd/conf/* /unrealircd_defaultconf/
 
 WORKDIR /
 USER ${UNREAL_USER}
