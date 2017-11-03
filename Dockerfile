@@ -57,7 +57,7 @@ USER ${UNREAL_USER}
 ADD openssl.cnf /usr/local/unrealircd/conf/ssl/openssl.cnf
 ADD start /start
 RUN ls -lha /usr/local/
-RUN ls -lha /usr/local/unrealircd/
+RUN ls -lha /usr/local/unrealircd/conf/
 RUN cp -Rpv /usr/local/unrealircd/conf/* /unrealircd_defaultconf/
 
 WORKDIR /
