@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:14.04 as builder
 
 MAINTAINER  Metabool
 
@@ -9,6 +9,10 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
 WORKDIR /usr/src
+RUN useradd -m -d ${UNREAL_HOME} -s /bin/false --uid 1000 ${UNREAL_USER} && \
+    mkdir -p /unrealircd_defaultconf && \
+    chown -R ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf
+
 RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/01buildconfig && \
     echo 'APT::Get::Assume-Yes "true";' >> /etc/apt/apt.conf.d/01buildconfig && \
     echo 'APT::Get::force-yes "true";' >> /etc/apt/apt.conf.d/01buildconfig  && \
@@ -17,11 +21,6 @@ RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/01buildconfig && 
     apt-get upgrade -y && \
     apt-get install -y build-essential curl libssl-dev ca-certificates && \
     apt-get clean
-
-RUN useradd -m -d ${UNREAL_HOME} -s /bin/false --uid 1000 ${UNREAL_USER}
-
-RUN mkdir -p /unrealircd_defaultconf && \
-    chown -R ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf 
 
 USER ${UNREAL_USER}
 RUN cd ${UNREAL_HOME} && \
@@ -49,16 +48,30 @@ RUN cd ${UNREAL_HOME} && \
     make && \
     make install
 
+FROM ubuntu:14.04
 
-RUN cp -Rpv ${UNREAL_HOME}/unrealircd/conf/* /unrealircd_defaultconf/
+MAINTAINER  Metabool
+
+ENV UNREALIRCD_VERSION unrealircd-4.0.15
+ENV UNREAL_USER=unreal
+ENV UNREAL_HOME=/home/unreal
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+WORKDIR /usr/src
+RUN apt-get update && apt-get install openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -d ${UNREAL_HOME} -s /bin/false --uid 1000 ${UNREAL_USER} && \
+    mkdir -p /unrealircd_defaultconf && \
+    chown -R ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf
+
+COPY --from=builder ${UNREAL_HOME}/unrealircd ${UNREAL_HOME}/unrealircd
+
+RUN cp -Rpv ${UNREAL_HOME}/unrealircd/conf/* /unrealircd_defaultconf/ 
 ADD openssl.cnf /unrealircd_defaultconf/ssl/openssl.cnf
 ADD start /start
-USER root
-RUN chown ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf/ssl/openssl.cnf
-RUN apt-get -y remove build-essential && \
-    apt-get autoremove && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/src/* /etc/unrealircd/unrealircd.conf
+RUN chown -R ${UNREAL_USER}:${UNREAL_USER} /unrealircd_defaultconf/ssl/openssl.cnf && \
+chown -R ${UNREAL_USER}:${UNREAL_USER} ${UNREAL_HOME}/*
+RUN rm -f /etc/unrealircd/unrealircd.conf
 
 
 WORKDIR /
@@ -68,3 +81,4 @@ EXPOSE 6697
 EXPOSE 7000
 
 ENTRYPOINT ["/start"]
+#RUN /bin/bash
